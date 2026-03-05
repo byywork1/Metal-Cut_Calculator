@@ -1,4 +1,4 @@
-# Quick Start Guide
+# Metal Cut Calculator - Quick Start Guide
 
 ## 🚀 Getting Started (2 minutes)
 
@@ -58,7 +58,7 @@ Check the **Include Shave** box to subtract 1/16" from the result
 
 All connector sizes and offsets are stored in:
 ```
-data/PVC Cut Database.xlsx
+data/Metal Cut Database.xlsx
 ```
 
 Supported size formats:

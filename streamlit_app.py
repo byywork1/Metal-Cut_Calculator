@@ -320,7 +320,7 @@ def init_image_editing_state():
 
 # Page config
 st.set_page_config(
-    page_title="PVC Cut Calculator",
+    page_title="Metal Cut Calculator",
     page_icon="🔧",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -767,7 +767,7 @@ with jobs_tab:
             
             with col1:
                 # Generate text version for printing
-                export_text = f"PVC CUT CALCULATOR - JOB CHECKLIST\n"
+                export_text = f"METAL CUT CALCULATOR - JOB CHECKLIST\n"
                 export_text += f"Job: {st.session_state.current_job}\n"
                 export_text += f"{'='*60}\n\n"
                 
@@ -1235,7 +1235,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: gray; font-size: 0.8em;'>
-    <p>PVC Cut Calculator MVP | Built with Streamlit</p>
+    <p>Metal Cut Calculator MVP | Built with Streamlit</p>
     </div>
     """,
     unsafe_allow_html=True

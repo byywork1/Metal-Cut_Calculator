@@ -1,6 +1,6 @@
-# PVC Cut Calculator - MVP Web App
+# Metal Cut Calculator - MVP Web App
 
-A web-based calculator for determining precise PVC pipe cut lengths for different connector configurations.
+A web-based calculator for determining precise metal pipe cut lengths for different connector configurations.
 
 ## Features
 
@@ -26,7 +26,7 @@ A web-based calculator for determining precise PVC pipe cut lengths for differen
 
 1. Clone or navigate to the project directory:
 ```bash
-cd PVC-Cut-Calculator
+cd Metal-Cut-Calculator
 ```
 
 2. Install dependencies:
@@ -46,7 +46,7 @@ The app will open automatically in your browser at `http://localhost:8501`
 ## Project Structure
 
 ```
-PVC-Cut-Calculator/
+Metal-Cut-Calculator/
 ├── src/
 │   ├── __init__.py
 │   ├── config.py              # Configuration and connector types
@@ -56,7 +56,7 @@ PVC-Cut-Calculator/
 │   ├── models.py              # Data models
 │   └── main.py                # CLI interface
 ├── data/
-│   └── PVC Cut Database.xlsx  # Connector offset database
+│   └── Metal Cut Database.xlsx  # Connector offset database
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
 ├── streamlit_app.py           # Web app entry point
@@ -73,7 +73,7 @@ PVC-Cut-Calculator/
 
 ## Connector Database
 
-The `PVC Cut Database.xlsx` file contains:
+The `Metal Cut Database.xlsx` file contains:
 - **Part**: Connector type (e.g., "Tee (Socket x Socket x Socket)")
 - **Size**: Connector size (numeric or text format like "1.5x1.5x0.5")
 - **Offset**: Offset measurement from fitting center
