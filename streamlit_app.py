@@ -10,7 +10,7 @@ import re
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.loader import DimensionLoader
-from src.api import get_cut_length, get_lay_in_cuts, get_bushing_cut
+from src.api import get_cut_length
 from src.config import EXCEL_PATH, SUPPORTED_CONNECTOR_TYPES, CONNECTOR_SIZES
 from src.main import decimal_to_fraction_16ths
 
@@ -360,11 +360,11 @@ loader = st.session_state.loader
 loader.session_offsets = st.session_state.connector_offsets
 
 # Title and description
-st.title("🔧 PVC Cut Calculator")
-st.markdown("Calculate precise PVC pipe cut lengths for different connector configurations.")
+st.title("🔧 Metal Cut Calculator")
+st.markdown("Calculate precise metal pipe cut lengths for different connector configurations.")
 
 # Tabs for different calculation types
-jobs_tab, standard_tab, layin_tab, bushing_tab, manage_tab = st.tabs(["Jobs", "Standard Cut", "Lay-in Cut", "Bushing Cut", "Manage Fittings"])
+jobs_tab, standard_tab, manage_tab = st.tabs(["Jobs", "Standard Cut", "Manage Fittings"])
 
 # ============================================================================
 # TAB 1: STANDARD CUT (single cut between two connectors)
@@ -374,33 +374,6 @@ with standard_tab:
     st.markdown("Calculate a single cut between two connectors.")
     
     type_a, size_a, type_b, size_b = select_connector_pair("Connection A", "Connection B", "std")
-    
-    # Stab selection for Tee (Reducing)
-    use_g1_a = False
-    use_g1_b = False
-    
-    if type_a == "Tee (Reducing)" or type_b == "Tee (Reducing)":
-        st.markdown("**Tee (Reducing) Configuration**")
-        
-        if type_a == "Tee (Reducing)":
-            st.markdown("**Connection A - Tee (Reducing)**")
-            stab_option_a = st.radio(
-                "Select stab type for Connection A:",
-                ["(1) Horizontal Stab", "(2) Vertical Stab"],
-                key="std_stab_a",
-                horizontal=True
-            )
-            use_g1_a = stab_option_a == "(2) Vertical Stab"
-        
-        if type_b == "Tee (Reducing)":
-            st.markdown("**Connection B - Tee (Reducing)**")
-            stab_option_b = st.radio(
-                "Select stab type for Connection B:",
-                ["(1) Horizontal Stab", "(2) Vertical Stab"],
-                key="std_stab_b",
-                horizontal=True
-            )
-            use_g1_b = stab_option_b == "(2) Vertical Stab"
     
     # Measurement inputs
     st.markdown("**Measurement**")
@@ -463,253 +436,7 @@ with standard_tab:
             st.markdown(f'<div class="error-box">❌ Unexpected error: {e}</div>', unsafe_allow_html=True)
 
 # ============================================================================
-# TAB 2: LAY-IN CUT (three fittings: A -> Lay-in -> B)
-# ============================================================================
-with layin_tab:
-    st.subheader("Lay-in Cut (Three Fittings)")
-    st.markdown("Calculate two cuts for lay-in connector configuration: Fitting A -> Lay-in Fitting -> Fitting B")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("**Fitting A**")
-        type_a = st.selectbox(
-            "Connection Type A",
-            st.session_state.connector_types_modified,
-            key="lay_type_a",
-            label_visibility="collapsed"
-        )
-        size_a = st.selectbox(
-            "Size A",
-            st.session_state.connector_sizes_modified.get(type_a, []),
-            key="lay_size_a",
-            label_visibility="collapsed"
-        )
-        # Display image for type_a
-        display_connector_image(type_a)
-    
-    with col2:
-        st.markdown("**Lay-in Fitting**")
-        type_lay_in = st.selectbox(
-            "Lay-in Connection Type",
-            st.session_state.connector_types_modified,
-            key="lay_type_lay_in",
-            label_visibility="collapsed"
-        )
-        size_lay_in = st.selectbox(
-            "Lay-in Size",
-            st.session_state.connector_sizes_modified.get(type_lay_in, []),
-            key="lay_size_lay_in",
-            label_visibility="collapsed"
-        )
-        # Display image for type_lay_in
-        display_connector_image(type_lay_in)
-    
-    with col3:
-        st.markdown("**Fitting B**")
-        type_b = st.selectbox(
-            "Connection Type B",
-            st.session_state.connector_types_modified,
-            key="lay_type_b",
-            label_visibility="collapsed"
-        )
-        size_b = st.selectbox(
-            "Size B",
-            st.session_state.connector_sizes_modified.get(type_b, []),
-            key="lay_size_b",
-            label_visibility="collapsed"
-        )
-        # Display image for type_b (flip if Elbow 90)
-        display_connector_image(type_b, flip=(type_b == "Elbow 90(Socket x Socket)"))
-    
-    # Lay-in specific measurements
-    st.markdown("**Measurements**")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        c2c_overall = st.number_input(
-            "Overall C2C (inches)",
-            min_value=0.0,
-            value=12.0,
-            step=0.25,
-            key="lay_c2c_overall"
-        )
-    
-    with col2:
-        c2c_lay_in = st.number_input(
-            "C2C: Fitting A to Lay-in (inches)",
-            min_value=0.0,
-            value=6.0,
-            step=0.25,
-            key="lay_c2c_lay_in"
-        )
-    
-    include_shave = st.number_input(
-        "Shave amount for both cuts (inches)",
-        min_value=0.0,
-        value=0.0,
-        step=0.0625,
-        format="%.4f",
-        help="Leave at 0 to skip shaving. Default is 1/16 = 0.0625",
-        key="lay_shave"
-    )
-    
-    # Calculate button
-    if st.button("Calculate Lay-in Cuts", key="lay_calc", type="primary"):
-        try:
-            request, (cut1, cut2) = get_lay_in_cuts(
-                loader,
-                type_a,
-                size_a,
-                type_lay_in,
-                size_lay_in,
-                type_b,
-                size_b,
-                c2c_overall,
-                c2c_lay_in
-            )
-            
-            if include_shave > 0:
-                cut1 -= include_shave
-                cut2 -= include_shave
-            
-            # Display result
-            st.markdown('<div class="result-box">', unsafe_allow_html=True)
-            st.markdown("### ✅ Result")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("**Cut 1 (A → Lay-in):**")
-                st.markdown(f"- Decimal: {cut1:.5f}\"")
-                st.markdown(f"- Fraction: {decimal_to_fraction_16ths(cut1)}")
-            
-            with col2:
-                st.markdown("**Cut 2 (Lay-in → B):**")
-                st.markdown(f"- Decimal: {cut2:.5f}\"")
-                st.markdown(f"- Fraction: {decimal_to_fraction_16ths(cut2)}")
-            
-            st.markdown("---")
-            st.markdown("**Calculation Details:**")
-            st.text(str(request))
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        except ValueError as e:
-            st.markdown(f'<div class="error-box">❌ Error: {e}</div>', unsafe_allow_html=True)
-        except Exception as e:
-            st.markdown(f'<div class="error-box">❌ Unexpected error: {e}</div>', unsafe_allow_html=True)
-
-# ============================================================================
-# TAB 3: BUSHING CUT (three fittings: A -> Bushing -> B)
-# ============================================================================
-with bushing_tab:
-    st.subheader("Bushing Cut (Three Fittings)")
-    st.markdown("Calculate cut length with bushing: Fitting A -> Bushing -> Fitting B")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("**Fitting A**")
-        type_a = st.selectbox(
-            "Connection Type A",
-            st.session_state.connector_types_modified,
-            key="bush_type_a",
-            label_visibility="collapsed"
-        )
-        size_a = st.selectbox(
-            "Size A",
-            st.session_state.connector_sizes_modified.get(type_a, []),
-            key="bush_size_a",
-            label_visibility="collapsed"
-        )
-        display_connector_image(type_a)
-    
-    with col2:
-        st.markdown("**Bushing**")
-        type_bushing = "Bushing (Spigot x Socket)"
-        st.markdown("Type: Bushing (Spigot x Socket)")
-        size_bushing = st.selectbox(
-            "Bushing Size",
-            st.session_state.connector_sizes_modified.get(type_bushing, []),
-            key="bush_size_bushing",
-            label_visibility="collapsed"
-        )
-        display_connector_image(type_bushing)
-    
-    with col3:
-        st.markdown("**Fitting B**")
-        type_b = st.selectbox(
-            "Connection Type B",
-            st.session_state.connector_types_modified,
-            key="bush_type_b",
-            label_visibility="collapsed"
-        )
-        size_b = st.selectbox(
-            "Size B",
-            st.session_state.connector_sizes_modified.get(type_b, []),
-            key="bush_size_b",
-            label_visibility="collapsed"
-        )
-        display_connector_image(type_b, flip=(type_b == "Elbow 90(Socket x Socket)"))
-    
-    # Bushing specific measurements
-    st.markdown("**Measurements**")
-    c2c = st.number_input(
-        "Center-to-Center (inches)",
-        min_value=0.0,
-        value=12.0,
-        step=0.25,
-        key="bush_c2c"
-    )
-    
-    include_shave = st.number_input(
-        "Shave amount (inches)",
-        min_value=0.0,
-        value=0.0,
-        step=0.0625,
-        format="%.4f",
-        help="Leave at 0 to skip shaving. Default is 1/16 = 0.0625",
-        key="bush_shave"
-    )
-    
-    # Calculate button
-    if st.button("Calculate Bushing Cut", key="bush_calc", type="primary"):
-        try:
-            request, cut_length = get_bushing_cut(
-                loader,
-                type_a,
-                size_a,
-                type_bushing,
-                size_bushing,
-                type_b,
-                size_b,
-                c2c
-            )
-            
-            if include_shave > 0:
-                cut_length -= include_shave
-            
-            # Display result
-            st.markdown('<div class="result-box">', unsafe_allow_html=True)
-            st.markdown("### ✅ Result")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f"**Decimal:** {cut_length:.5f}\"")
-            with col2:
-                st.markdown(f"**Fraction (1/16ths):** {decimal_to_fraction_16ths(cut_length)}")
-            
-            st.markdown("---")
-            st.markdown("**Calculation Details:**")
-            st.text(str(request))
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        except ValueError as e:
-            st.markdown(f'<div class="error-box">❌ Error: {e}</div>', unsafe_allow_html=True)
-        except Exception as e:
-            st.markdown(f'<div class="error-box">❌ Unexpected error: {e}</div>', unsafe_allow_html=True)
-
-# ============================================================================
-# TAB 4: JOBS - Create and manage job checklists
+# TAB 3: JOBS - Create and manage job checklists
 # ============================================================================
 with jobs_tab:
     st.subheader("Job Management")
@@ -769,7 +496,7 @@ with jobs_tab:
         
         cut_type = st.radio(
             "Cut Type",
-            ["Standard Cut", "Bushing Cut"],  # "Lay-in Cut" - disabled for now
+            ["Standard Cut"],
             key="job_cut_type"
         )
         
@@ -982,96 +709,7 @@ with jobs_tab:
         #             st.rerun()
         #         except Exception as e:
         #             st.error(f"Error: {e}")
-        
-        elif cut_type == "Bushing Cut":
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                job_type_a = st.selectbox(
-                    "Fitting A Type",
-                    st.session_state.connector_types_modified,
-                    key="job_bush_type_a"
-                )
-                job_size_a = st.selectbox(
-                    "Size A",
-                    st.session_state.connector_sizes_modified.get(job_type_a, []),
-                    key="job_bush_size_a"
-                )
-                # Display image for job_type_a
-                display_connector_image(job_type_a, width=100)
-            
-            with col2:
-                st.markdown("**Bushing**")
-                st.markdown("Type: Bushing (Spigot x Socket)")
-                job_size_bushing = st.selectbox(
-                    "Bushing Size",
-                    st.session_state.connector_sizes_modified.get("Bushing (Spigot x Socket)", []),
-                    key="job_bush_size_bushing"
-                )
-                # Display image for bushing
-                display_connector_image("Bushing (Spigot x Socket)", width=100)
-            
-            with col3:
-                job_type_b = st.selectbox(
-                    "Fitting B Type",
-                    st.session_state.connector_types_modified,
-                    key="job_bush_type_b"
-                )
-                job_size_b = st.selectbox(
-                    "Size B",
-                    st.session_state.connector_sizes_modified.get(job_type_b, []),
-                    key="job_bush_size_b"
-                )
-                # Display image for job_type_b (flip if Elbow 90)
-                display_connector_image(job_type_b, width=100, flip=(job_type_b == "Elbow 90(Socket x Socket)"))
-            
-            job_c2c = st.number_input(
-                "Center-to-Center",
-                min_value=0.0,
-                value=12.0,
-                step=0.25,
-                key="job_bush_c2c"
-            )
-            
-            job_shave = st.checkbox("Include Shave (-1/16\")", key="job_bush_shave")
-            job_notes = st.text_input("Notes (optional)", key="job_bush_notes")
-            
-            if st.button("Add Cut to Job", key="add_bush_cut"):
-                try:
-                    request, cut_length = get_bushing_cut(
-                        loader,
-                        job_type_a,
-                        job_size_a,
-                        "Bushing (Spigot x Socket)",
-                        job_size_bushing,
-                        job_type_b,
-                        job_size_b,
-                        job_c2c
-                    )
-                    
-                    if job_shave:
-                        cut_length -= 1/16
-                    
-                    cut_num = len(st.session_state.jobs[st.session_state.current_job]['cuts']) + 1
-                    cut_data = {
-                        'number': cut_num,
-                        'type': 'Bushing',
-                        'connection_a': f"{job_type_a} ({job_size_a}\")",
-                        'connection_bushing': f"Bushing ({job_size_bushing}\")",
-                        'connection_b': f"{job_type_b} ({job_size_b}\")",
-                        'c2c': job_c2c,
-                        'length_decimal': cut_length,
-                        'length_fraction': decimal_to_fraction_16ths(cut_length),
-                        'shave': job_shave,
-                        'notes': job_notes
-                    }
-                    
-                    st.session_state.jobs[st.session_state.current_job]['cuts'].append(cut_data)
-                    st.success(f"Cut {cut_num} added!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        
+
         # Display checklist
         st.markdown("#### Checklist")
         
