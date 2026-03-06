@@ -58,8 +58,8 @@ def add_new_connector_to_config(connector_type: str, sizes_list: list, image_fil
             content = f.read()
         
         # Add to SUPPORTED_CONNECTOR_TYPES
-        old_supported = 'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Tee (Reducing)",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n]'
-        new_supported = f'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Tee (Reducing)",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n    "{connector_type}",\n]'
+        old_supported = 'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Reducing Outlet Tee",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n]'
+        new_supported = f'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Reducing Outlet Tee",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n    "{connector_type}",\n]'
         content = content.replace(old_supported, new_supported)
         
         # Add to CONNECTOR_SIZES
@@ -375,6 +375,33 @@ with standard_tab:
     
     type_a, size_a, type_b, size_b = select_connector_pair("Connection A", "Connection B", "std")
     
+    # Stab selection for Reducing Outlet Tee
+    use_g1_a = False
+    use_g1_b = False
+    
+    if type_a == "Reducing Outlet Tee" or type_b == "Reducing Outlet Tee":
+        st.markdown("**Reducing Outlet Tee Configuration**")
+        
+        if type_a == "Reducing Outlet Tee":
+            st.markdown("**Connection A - Reducing Outlet Tee**")
+            stab_option_a = st.radio(
+                "Select stab type for Connection A:",
+                ["(1) Horizontal Stab", "(2) Vertical Stab"],
+                key="std_stab_a",
+                horizontal=True
+            )
+            use_g1_a = stab_option_a == "(2) Vertical Stab"
+        
+        if type_b == "Reducing Outlet Tee":
+            st.markdown("**Connection B - Reducing Outlet Tee**")
+            stab_option_b = st.radio(
+                "Select stab type for Connection B:",
+                ["(1) Horizontal Stab", "(2) Vertical Stab"],
+                key="std_stab_b",
+                horizontal=True
+            )
+            use_g1_b = stab_option_b == "(2) Vertical Stab"
+    
     # Measurement inputs
     st.markdown("**Measurement**")
     col1, col2 = st.columns(2)
@@ -530,15 +557,15 @@ with jobs_tab:
                 # Display image for job_type_b (flip if Elbow 90)
                 display_connector_image(job_type_b, width=120, flip=(job_type_b == "Elbow 90(Socket x Socket)"))
             
-            # Stab selection for Tee (Reducing)
+            # Stab selection for Reducing Outlet Tee
             job_use_g1_a = False
             job_use_g1_b = False
             
-            if job_type_a == "Tee (Reducing)" or job_type_b == "Tee (Reducing)":
-                st.markdown("**Tee (Reducing) Configuration**")
+            if job_type_a == "Reducing Outlet Tee" or job_type_b == "Reducing Outlet Tee":
+                st.markdown("**Reducing Outlet Tee Configuration**")
                 
-                if job_type_a == "Tee (Reducing)":
-                    st.markdown("**Connection A - Tee (Reducing)**")
+                if job_type_a == "Reducing Outlet Tee":
+                    st.markdown("**Connection A - Reducing Outlet Tee**")
                     job_stab_option_a = st.radio(
                         "Select stab type for Connection A:",
                         ["(1) Horizontal Stab", "(2) Vertical Stab"],
@@ -547,8 +574,8 @@ with jobs_tab:
                     )
                     job_use_g1_a = job_stab_option_a == "(2) Vertical Stab"
                 
-                if job_type_b == "Tee (Reducing)":
-                    st.markdown("**Connection B - Tee (Reducing)**")
+                if job_type_b == "Reducing Outlet Tee":
+                    st.markdown("**Connection B - Reducing Outlet Tee**")
                     job_stab_option_b = st.radio(
                         "Select stab type for Connection B:",
                         ["(1) Horizontal Stab", "(2) Vertical Stab"],

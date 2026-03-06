@@ -47,7 +47,7 @@ Check the **Include Shave** box to subtract 1/16" from the result
 ## 🔧 Connector Types Available
 
 1. **Tee (Socket x Socket x Socket)** - Standard 3-way tee
-2. **Tee (Reducing)** - Reducing tee with different sizes
+2. **Reducing Outlet Tee** - Reducing outlet tee with different sizes
 3. **Bushing (Spigot x Socket)** - Bushing connector
 4. **Elbow 90 (Socket x Socket)** - 90-degree elbow
 5. **Union (Socket x Socket)** - Union connector

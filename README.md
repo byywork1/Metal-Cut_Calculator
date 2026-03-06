@@ -9,7 +9,7 @@ A web-based calculator for determining precise metal pipe cut lengths for differ
 - **Bushing Cut**: Account for bushing thickness in calculations
 - **Dropdown Menus**: Select from 5 predefined connector types:
   - Tee (Socket x Socket x Socket)
-  - Tee (Reducing)
+  - Reducing Outlet Tee
   - Bushing (Spigot x Socket)
   - Elbow 90 (Socket x Socket)
   - Union (Socket x Socket)
