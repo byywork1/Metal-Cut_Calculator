@@ -188,19 +188,40 @@ def delete_connector_from_config(connector_type: str, size: str = None):
     """Delete connector type or specific size from src/config.py."""
     try:
         config_path = Path(__file__).parent / "src" / "config.py"
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         if size:
-            lines = content.split('\n')
-            content = '\n'.join([line for line in lines if not (f'"{connector_type}"' in line and f'"{size}"' in line)])
+            # Delete a single size from a connector's size list
+            import re
+            escaped_type = re.escape(connector_type)
+            # Find the size list for this connector
+            pattern = rf'("{escaped_type}": \[)(.*?)(\])'
+            
+            def remove_size_from_list(match):
+                prefix = match.group(1)
+                size_list = match.group(2)
+                suffix = match.group(3)
+                
+                # Remove the size with proper comma handling
+                # Match the size with quotes and surrounding commas/spaces
+                size_pattern = rf"'?{re.escape(size)}'?,?\s*"
+                new_list = re.sub(size_pattern, '', size_list)
+                # Clean up any double commas or trailing commas
+                new_list = re.sub(r',\s*,', ',', new_list)
+                new_list = re.sub(r',\s*(\])', r'\1', new_list)
+                new_list = re.sub(r'(\[)\s*,', r'\1', new_list)
+                
+                return f'{prefix}{new_list}{suffix}'
+            
+            content = re.sub(pattern, remove_size_from_list, content, flags=re.DOTALL)
         else:
             # Remove entire connector type from all config lists
             content = content.replace(f'    "{connector_type}",\n', '')
-            content = re.sub(f'    "{connector_type}": .*?\n', '', content)
-            content = re.sub(f'    "{connector_type}": "[^"]*",\n', '', content)
+            content = re.sub(rf'    "{re.escape(connector_type)}": \[.*?\],\n', '', content, flags=re.DOTALL)
+            content = re.sub(rf'    "{re.escape(connector_type)}": "[^"]*",\n', '', content)
         
-        with open(config_path, 'w') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             f.write(content)
         return True
     except Exception as e:
