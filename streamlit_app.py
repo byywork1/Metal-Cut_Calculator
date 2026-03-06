@@ -54,27 +54,42 @@ def add_new_connector_to_config(connector_type: str, sizes_list: list, image_fil
         import re
         config_path = Path(__file__).parent / "src" / "config.py"
         
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Add to SUPPORTED_CONNECTOR_TYPES
-        old_supported = 'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Reducing Outlet Tee",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n]'
-        new_supported = f'SUPPORTED_CONNECTOR_TYPES = [\n    "Tee (Socket x Socket x Socket)",\n    "Reducing Outlet Tee",\n    "Bushing (Spigot x Socket)",\n    "Elbow 90(Socket x Socket)",\n    "Union (Socket x Socket)",\n    "{connector_type}",\n]'
-        content = content.replace(old_supported, new_supported)
+        # Add to SUPPORTED_CONNECTOR_TYPES by finding the last entry and appending
+        supported_pattern = r'(SUPPORTED_CONNECTOR_TYPES = \[.*?)'
+        match = re.search(r'(\s*"Tee",\s*\])', content, re.DOTALL)
+        if match:
+            new_supported_entry = match.group(1).replace('"Tee",', f'"Tee",\n    "{connector_type}",')
+            content = content.replace(match.group(1), new_supported_entry)
         
         # Add to CONNECTOR_SIZES
         sizes_str = str([s['size'] for s in sizes_list])
-        old_ending = '    "Union (Socket x Socket)": ["1.5", "2", "2.5", "3", "4"],\n}'
-        new_ending = f'    "Union (Socket x Socket)": ["1.5", "2", "2.5", "3", "4"],\n    "{connector_type}": {sizes_str},\n}}'
-        content = content.replace(old_ending, new_ending)
+        connector_sizes_pattern = r'(\s*"Tee": \[.*?\],\s*\})'
+        sizes_match = re.search(connector_sizes_pattern, content, re.DOTALL)
+        if sizes_match:
+            new_sizes_entry = sizes_match.group(1).replace(
+                '"Tee": [',
+                f'"Tee": ['
+            ).replace(
+                '],',
+                f'],\n    "{connector_type}": {sizes_str},'
+            )
+            content = content.replace(sizes_match.group(1), new_sizes_entry)
         
         # Add to CONNECTOR_IMAGE_MAP if image provided
         if image_filename:
-            old_image_ending = '    "Union (Socket x Socket)": "union.png",\n}'
-            new_image_ending = f'    "Union (Socket x Socket)": "union.png",\n    "{connector_type}": "{image_filename}",\n}}'
-            content = content.replace(old_image_ending, new_image_ending)
+            image_pattern = r'(\s*"Tee": "tee\.png",\s*\})'
+            image_match = re.search(image_pattern, content, re.DOTALL)
+            if image_match:
+                new_image_entry = image_match.group(1).replace(
+                    '"Tee": "tee.png",',
+                    f'"Tee": "tee.png",\n    "{connector_type}": "{image_filename}",'
+                )
+                content = content.replace(image_match.group(1), new_image_entry)
         
-        with open(config_path, 'w') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
         return True
@@ -294,7 +309,7 @@ def select_connector_pair(col1_label: str, col2_label: str, key_prefix: str):
             key=f"{key_prefix}_size_b",
             label_visibility="collapsed"
         )
-        display_connector_image(type_b, flip=(type_b == "Elbow 90(Socket x Socket)"))
+        display_connector_image(type_b, flip=(type_b in ["Short Radius 90 Elbow", "Long Radius 90 Elbow"]))
     
     return type_a, size_a, type_b, size_b
 
@@ -554,8 +569,8 @@ with jobs_tab:
                     st.session_state.connector_sizes_modified.get(job_type_b, []),
                     key="job_std_size_b"
                 )
-                # Display image for job_type_b (flip if Elbow 90)
-                display_connector_image(job_type_b, width=120, flip=(job_type_b == "Elbow 90(Socket x Socket)"))
+                # Display image for job_type_b (flip if Elbow)
+                display_connector_image(job_type_b, width=120, flip=(job_type_b in ["Short Radius 90 Elbow", "Long Radius 90 Elbow"]))
             
             # Stab selection for Reducing Outlet Tee
             job_use_g1_a = False
