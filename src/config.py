@@ -10,7 +10,7 @@ SUPPORTED_CONNECTOR_TYPES = [
     "Cap",
     "Concentric Reducer",
     "Eccentric Reducer",
-    "Long Pattern Lap Joint Stub End ",
+    "Long Pattern Lap Joint Stub End",
     "Long Radius 90 Elbow",
     "Reducing Outlet Tee",
     "Short Pattern Lap Joint Stub End",
